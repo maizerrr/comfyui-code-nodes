@@ -11,9 +11,13 @@ class DummyNode:
     RETURN_TYPES = ("*",)
     RETURN_NAMES = ("output",)
     FUNCTION = "process"
-    CATEGORY = "utils"
+    CATEGORY = "custom_code"
 
     def process(self, **kwargs):
+        # Get the actual input type if connected
+        input_data = kwargs.get("any_input")
+        if input_data is not None:
+            self.RETURN_TYPES = (type(input_data).__name__,)
         return (kwargs.get("any_input"),)
 
 NODE_CLASS_MAPPINGS = {"DummyNode": DummyNode}
