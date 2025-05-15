@@ -21,17 +21,18 @@ class OpenAIQueryNode:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("response",)
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("response", "encoded_image")
     FUNCTION = "process"
     CATEGORY = "custom_code"
 
-    def process(self, api_key: str, model: str, system_prompt: str, user_query: str, image_input: List[torch.Tensor]=None) -> str:
+    def process(self, api_key: str, model: str, system_prompt: str, user_query: str, image_input: List[torch.Tensor]=None) -> tuple[str, str]:
         if not api_key:
             raise ValueError("API key is required")
 
         try:
             client = openai.OpenAI(api_key=api_key)
+            encoded_images = self.process_image(image_input) if image_input is not None else []
             response = client.chat.completions.create(
                 model=model,
                 messages=[
@@ -39,13 +40,13 @@ class OpenAIQueryNode:
                     {"role": "user", "content": [
                         {"type": "text", "text": user_query},
                         *([{"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}} 
-                        for base64_image in self.process_image(image_input)] if image_input is not None else [])
+                        for base64_image in encoded_images])
                     ]}
                 ]
             )
-            return (response.choices[0].message.content,)
+            return (response.choices[0].message.content, ", ".join(encoded_images))
         except Exception as e:
-            return (f"Error: {str(e)}",)
+            return (f"Error: {str(e)}", "")
 
     def process_image(self, image_tensor: List[torch.Tensor]) -> List[str]:
         if image_tensor is None:
