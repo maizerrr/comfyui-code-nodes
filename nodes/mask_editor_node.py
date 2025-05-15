@@ -6,7 +6,7 @@ class MaskEditorNode:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "image": ("IMAGE", {"display": "image"}),
+                "image": ("IMAGE", {"display": "image", "type": "image_upload"}),
             }
         }
 
