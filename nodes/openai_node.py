@@ -58,7 +58,9 @@ class OpenAIQueryNode:
             tensor = tensor.cpu().float()
             if tensor.dim() == 4:
                 tensor = tensor.squeeze(0)
-            tensor = tensor.permute(2, 0, 1)
+            # Handle channel-first format if needed
+            if tensor.size(0) == 3:
+                tensor = tensor.permute(1, 2, 0)
             pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'), 'RGB')
             
             # Convert to JPEG base64
