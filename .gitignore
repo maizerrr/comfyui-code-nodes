@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Temp files
+*.swp
+*.swo
+*.log
+
+# Environment files
+.env
+.env.local
+
+# Build artifacts
+/dist/
+/node_modules/
+
+# Testing
+.coverage
+htmlcov/
+
+# Local development
+*.local.*
