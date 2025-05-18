@@ -12,7 +12,7 @@ class OpenAIQueryNode:
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
-                "model": (["gpt-3.5-turbo", "gpt-4o"], {"default": "gpt-4o"}),
+                "model": (["o4-mini", "gpt-4o"], {"default": "gpt-4o"}),
                 "system_prompt": ("STRING", {"default": "You are a helpful assistant.", "multiline": True}),
                 "user_query": ("STRING", {"multiline": True}),
             },
