@@ -68,15 +68,24 @@ class OpenAIGPTImageNode:
             mask_files = []
             if masks is not None:
                 mask_files = tensor_to_files(masks, is_mask=True)
-            response = client.images.edit(
-                model="gpt-image-1",
-                image=image_files,
-                mask=mask_files,
-                prompt=user_query,
-                size=size,
-                quality=quality,
-                n=n
-            )
+            if len(image_files) != 0:
+                response = client.images.edit(
+                    model="gpt-image-1",
+                    image=image_files,
+                    mask=mask_files,
+                    prompt=user_query,
+                    size=size,
+                    quality=quality,
+                    n=n
+                )
+            else:
+                response = client.images.generate(
+                    model="gpt-image-1",
+                    prompt=user_query,
+                    size=size,
+                    quality=quality,
+                    n=n
+                )
             for f in image_files + mask_files:
                 f.close()
             if not hasattr(response, "data") or not response.data or not hasattr(response.data[0], "b64_json"):
@@ -88,7 +97,7 @@ class OpenAIGPTImageNode:
                 base64_image = d.b64_json
                 results.append(base64_to_tensor(base64_image))
             results = torch.stack(results, dim=0)
-            return (results, f"input shape {reference_images.shape}, output shape {results.shape}")
+            return (results, "Debug info")
         except Exception:
             raise RuntimeError(f"OpenAI GPT-Image-1 Node Error: {traceback.format_exc()}")
 
