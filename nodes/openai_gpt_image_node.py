@@ -26,6 +26,8 @@ def tensor_to_files(tensor: torch.Tensor, is_mask: bool=False) -> List[io.BytesI
         t = tensor[i].cpu().float()
         if t.size(0) == 3:
             t = t.permute(1, 2, 0)
+        if t.size(0) == 1:
+            t = t.squeeze(0)
         pil_image = Image.fromarray((t.numpy() * 255).astype('uint8'), channel)
         buffered = io.BytesIO()
         pil_image.save(buffered, format=formatting)
@@ -68,11 +70,21 @@ class OpenAIGPTImageNode:
             mask_files = []
             if masks is not None:
                 mask_files = tensor_to_files(masks, is_mask=True)
-            if len(image_files) != 0:
+            if len(mask_files) == 1 and len(image_files) == 1:
+                # currently only support single image-mask pair
+                response = client.images.edit(
+                    model="gpt-image-1",
+                    image=image_files[0],
+                    mask=mask_files[0],
+                    prompt=user_query,
+                    size=size,
+                    quality=quality,
+                    n=n
+                )
+            elif len(image_files) != 0:
                 response = client.images.edit(
                     model="gpt-image-1",
                     image=image_files,
-                    mask=mask_files,
                     prompt=user_query,
                     size=size,
                     quality=quality,
