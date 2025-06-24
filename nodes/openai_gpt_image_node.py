@@ -41,6 +41,8 @@ class OpenAIGPTImageNode:
         return {
             "required": {
                 "api_key": ("STRING", {"default": "", "multiline": False}),
+                "base_url": ("STRING", {"default": "", "multiline": False}),
+                "model": ("STRING", {"default": "gpt-image-1", "multiline": False}),
                 "user_query": ("STRING", {"multiline": True}),
                 "size": (["1024x1024", "1536x1024", "1024x1536"], {"default": "1024x1024"}),
                 "quality": (["high", "medium", "low", "auto"], {"default": "high"}),
@@ -59,11 +61,14 @@ class OpenAIGPTImageNode:
     FUNCTION = "process"
     CATEGORY = "custom_code"
 
-    def process(self, api_key: str, user_query: str, size: str, quality: str, n: int, reference_images: torch.Tensor=None, masks: torch.Tensor=None, **kwargs):
+    def process(self, api_key: str, base_url: str, model: str, user_query: str, size: str, quality: str, n: int, reference_images: torch.Tensor=None, masks: torch.Tensor=None, **kwargs):
         if not api_key:
             raise ValueError("API key is required")
         try:
-            client = openai.OpenAI(api_key=api_key)
+            if base_url:
+                client = openai.OpenAI(base_url=base_url, api_key=api_key)
+            else:
+                client = openai.OpenAI(api_key=api_key)
             image_files = []
             if reference_images is not None:
                 image_files = tensor_to_files(reference_images, is_mask=False)
@@ -73,7 +78,7 @@ class OpenAIGPTImageNode:
             if len(mask_files) == 1 and len(image_files) == 1:
                 # currently only support single image-mask pair
                 response = client.images.edit(
-                    model="gpt-image-1",
+                    model=model,
                     image=image_files[0],
                     mask=mask_files[0],
                     prompt=user_query,
@@ -83,7 +88,7 @@ class OpenAIGPTImageNode:
                 )
             elif len(image_files) != 0:
                 response = client.images.edit(
-                    model="gpt-image-1",
+                    model=model,
                     image=image_files,
                     prompt=user_query,
                     size=size,
@@ -92,7 +97,7 @@ class OpenAIGPTImageNode:
                 )
             else:
                 response = client.images.generate(
-                    model="gpt-image-1",
+                    model=model,
                     prompt=user_query,
                     size=size,
                     quality=quality,
