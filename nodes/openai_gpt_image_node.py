@@ -69,24 +69,29 @@ class OpenAIGPTImageNode:
                 client = openai.OpenAI(base_url=base_url, api_key=api_key)
             else:
                 client = openai.OpenAI(api_key=api_key)
-            image_files = []
+            image_files = None
             if reference_images is not None:
                 image_files = tensor_to_files(reference_images, is_mask=False)
-            mask_files = []
+                if len(image_files) == 1:
+                    image_files = image_files[0]
+            mask_files = None
             if masks is not None:
                 mask_files = tensor_to_files(masks, is_mask=True)
-            if len(mask_files) == 1 and len(image_files) == 1:
-                # currently only support single image-mask pair
+                if len(mask_files) == 1:
+                    mask_files = mask_files[0]
+                else:
+                    raise ValueError("Only one mask is supported")
+            if image_files is not None and mask_files is not None:
                 response = client.images.edit(
                     model=model,
-                    image=image_files[0],
-                    mask=mask_files[0],
+                    image=image_files,
+                    mask=mask_files,
                     prompt=user_query,
                     size=size,
                     quality=quality,
                     n=n
                 )
-            elif len(image_files) != 0:
+            elif image_files is not None:
                 response = client.images.edit(
                     model=model,
                     image=image_files,
@@ -103,8 +108,14 @@ class OpenAIGPTImageNode:
                     quality=quality,
                     n=n
                 )
-            for f in image_files + mask_files:
-                f.close()
+            if image_files is not None:
+                if isinstance(image_files, list):
+                    for f in image_files:
+                        f.close()
+                else:
+                    image_files.close()
+            if mask_files is not None:
+                mask_files.close()
             if not hasattr(response, "data") or not response.data or not hasattr(response.data[0], "b64_json"):
                 raise RuntimeError(f"Invalid response from OpenAI API: missing image data. Full response: {response}")
             results = []
